@@ -552,6 +552,8 @@ $conf['404_fast_html'] = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN"
  */
 # $conf['allow_authorize_operations'] = FALSE;
 
+$work = TRUE;
+
 $databases = array (
   'default' => 
   array (
@@ -559,7 +561,7 @@ $databases = array (
     array (
       'database' => 'isup',
       'username' => 'root',
-      'password' => 'titi',
+      'password' => ($work) ? 'zoocha' : 'titi',
       'host' => 'localhost',
       'port' => '',
       'driver' => 'mysql',
