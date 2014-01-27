@@ -1,0 +1,20 @@
+<?php 
+
+/**
+ * @file
+ * Main monitoring isup module.
+ *
+ * This is what drives the client monitoring in the background.
+ * 
+ * Will probably run on cron every minute or 5 minutes, and checks each client's website.
+ * Will keep track of websites in a custom table.
+ * Table will probably require the following (add here as you think about it):
+ *   - url tracked
+ *   - last time checked
+ *   - last time up/down?
+ *   - current status - whether up or down at the moment (last time it was checked)
+ */
+
+function isup_manager_controller() {
+
+}

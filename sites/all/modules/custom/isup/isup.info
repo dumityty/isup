@@ -1,0 +1,4 @@
+name = Is Up Check
+description = "Basic Is Up Checking module, plus url check block."
+core = 7.x
+package = IsUp

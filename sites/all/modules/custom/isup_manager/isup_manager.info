@@ -1,0 +1,4 @@
+name = Is Up Monitor Manager
+description = "Main Is Up Monitor Manager module."
+core = 7.x
+package = IsUp
