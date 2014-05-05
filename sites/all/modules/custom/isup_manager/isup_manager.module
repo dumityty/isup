@@ -15,6 +15,161 @@
  *   - current status - whether up or down at the moment (last time it was checked)
  */
 
-function isup_manager_controller() {
+/**
+ * Implements hook_menu().
+ */
+function isup_manager_menu() {
+  $items['manager'] = array(
+    'title' => 'Manager',
+    'description' => 'Is it up manager',
+    'access callback' => TRUE,
+    'page callback' => 'isup_manager_page',
+    'page arguments' => array(1),
+    'type' => MENU_NORMAL_ITEM,
+    // 'type' => MENU_CALLBACK,
+    'file' => 'isup_manager.pages.inc'
+  );
 
+  $items['controller'] = array(
+    'title' => 'Controller',
+    'description' => 'Is it up manager',
+    'access callback' => TRUE,
+    'page callback' => 'isup_manager_controller',
+    'page arguments' => array(1),
+    'type' => MENU_CALLBACK,
+    'file' => 'isup_manager.pages.inc'
+  );
+
+  return $items;
+}
+
+/* 
+ * Function to check all websites and then record their status.
+ * You can also trigger this function for a specific Client (uid).
+ */
+function isup_manager_controller($uid = NULL) {
+	global $base_url;
+
+	$websites_select = db_select('isup_manager', 'im')
+		->fields('im')
+		// ->condition('', $drupal_uid, '=')
+		->execute();
+
+	// $websites = $websites_select->fetchAll();
+	
+
+	while ($site = $websites_select->fetchObject()) {
+		$url = $site->url;
+		
+		$request = _isup_curl_request($url);
+		$request = drupal_json_decode($request);
+
+		dpm($site, 'site');
+		dpm($request, 'request');
+
+		// this needs to be without ! on live
+		if (!$request['status']) {
+			$update = db_update('isup_manager')
+				->fields(array(
+						'status' => 1,
+						'last_checked' => time(),
+						'error' => NULL,
+					)
+				)
+				->condition('id', $site->id, '=')
+				->execute();
+		} 
+		else {
+			// Email section
+			// when the site goes down send an email but check that the difference between 	current timestamp and last_email is more than an hour
+			// if the site has been down for more than an hour basically, send an email
+			
+			$difference = time() - $site->last_email;
+
+			// if last_email hasn't been set then it's the first time it goes down so 
+			// OR
+			// if as above
+			$difference = 4000;
+			if (empty($site->last_email) || ($difference > 3600)) {
+
+				// send the email 
+			 	_isup_manager_send_email($site);
+
+			 	$email_sent = TRUE;
+			 	// update the last_email
+			 	// $update_email = db_update('isup_manager')
+					// ->fields(array(
+					// 		'last_email' => time(),
+					// 	)
+					// )
+					// ->condition('id', $site->id, '=')
+					// ->execute();
+			}
+
+			// Once the email is sent, update the table.
+			$update = db_update('isup_manager')
+				->fields(array(
+						'status' => 0,
+						'last_checked' => time(),
+						'last_down' => time(),
+						'last_email' => ($email_sent) ? time() : $site->last_email,
+						'http_return_code' => $request['retcode'],
+						'error' => $request['error'],
+					)
+				)
+				->condition('id', $site->id, '=')
+				->execute();
+
+			dpm($update,'update');
+		}
+	}
+
+	$output = '';
+	// $output .= 'Page to test the controller.';
+
+	return $output;
+
+}
+
+function _isup_manager_send_email($site) {
+	$message = "";
+	$message .= "Your site appear to be down.";
+
+	$email = 'titi@zoocha.com';
+	$subject = "Is Up Monitoring: $site->url is down.";
+	$body = $message;
+	$headers = "From: Is Up Monitoring <no-reply@example.com>" . "\r\n" . "Reply-To: " . $email . "\r\n" . "X-Mailer: PHP/" . phpversion();
+
+	dpm("sent");
+
+	//send a link to the order number and the profile number for dylan
+	// mail($email,$subject,$body,$headers);
+}
+
+function isup_manager_form_alter($form, &$form_state) {
+	if ($form['#form_id'] == 'user_register_form') {
+		// array_unshift($form['#submit'], 'my_submit');
+		array_unshift($form['#validate'], 'isup_manager_client_websites_validate');
+		// $form['#validate'][] = 'isup_manager_client_websites_validate';
+		$form['#submit'][] = 'isup_manager_client_websites_submit';
+		dpm($form);
+	}
+}
+
+// also don't forget to put email validation on the notification emails... or module to sort it out
+function isup_manager_client_websites_validate($form, &$form_state) {
+	dpm('bbbb');
+	drupal_set_message('Confirm','error');
+	form_set_error('aa','aaa');
+}
+
+/*
+ * submit handler to add the client's websites in the isup_manager table
+ */
+function isup_manager_client_websites_submit($form, &$form_state) {
+	dpm('aaa');
+	dpm($form_state, 'form_state');
+
+	// $insert = db_insert('isup_manager')
+	// 	->fields('')
 }

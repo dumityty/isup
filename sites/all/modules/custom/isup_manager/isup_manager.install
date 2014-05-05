@@ -1,0 +1,53 @@
+<?php
+
+/**
+ * Implements hook_schema()
+ */
+function isup_manager_schema() {
+  $schema['isup_manager'] = array(
+    'description' => 'Stores all website status information.',
+    'fields' => array(
+      'id' => array(
+        'description' => 'The primary identifier for a website.',
+        'type' => 'serial',   
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'description' => 'client\'s user id',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      //title column
+      'url' => array(
+        'description' => 'website url',
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => TRUE,
+      ),
+      'last_checked' => array(
+        'description' => 'last time the site was checked',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'last_down' => array(
+        'description' => 'last time the site was down',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'status' => array(
+        'description' => 'site status',
+        'type' => 'int', 
+        'not null' => FALSE,
+      ),
+      // error column
+    ),
+    'indexes' => array(
+      'id' => array('id'),
+    ),
+    'primary key' => array('id'),
+  );
+
+  return $schema;
+
+}

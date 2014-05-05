@@ -14,7 +14,7 @@
  */
 function isup_menu() {
   $items['isup'] = array(
-    'title' => 'Is is up?',
+    'title' => 'Is it up?',
     'description' => 'Check if website is up.',
     'access callback' => TRUE,
     'page callback' => 'isup_check',
@@ -35,9 +35,9 @@ function isup_check() {
 
 	$request = _isup_curl_request($url);
 
-	$request_json = drupal_json_encode($request);
+	// $request_json = drupal_json_encode($request);
 	
-	print $request_json;
+	print $request;
 }
 
 /*
@@ -46,32 +46,48 @@ function isup_check() {
 function _isup_curl_request($url) {
 	$ch = curl_init($url);
 
-    $options = array(
-        CURLOPT_NOBODY => true,
-        CURLOPT_FOLLOWLOCATION => true,
+  $options = array(
+      CURLOPT_NOBODY => true,
+      CURLOPT_FOLLOWLOCATION => true,
 
+  );
+  curl_setopt_array($ch, $options);
+  
+  curl_exec($ch);
+  $retcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+  
+  if ($retcode == 200) {
+    $return = array(
+        'status' => TRUE,
+        'retcode' => $retcode,
+        'error' => '',
     );
-    curl_setopt_array($ch, $options);
-    
-    curl_exec($ch);
-    $retcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $json_return = drupal_json_encode($return);
+  	curl_close($ch);
+    return $json_return;
+  }
+  // this happens if the internet goes down on the server so the site can't be checked,
+  // ... or if the hostname actually can't be found (domain not existant).
+  else if ($retcode == 0) {
+    $return = array(
+        'status' => TRUE,
+        'retcode' => $retcode,
+        'error' => curl_error($ch),
+    );
+    $json_return = drupal_json_encode($return);
     curl_close($ch);
-    
-    if ($retcode == 200) {
-        $return = array(
-            'status' => TRUE,
-            'retcode' => $retcode,
-            'error' => '',
-        );
-        return $return;
-    } else {
-        $return = array(
-            'status' => FALSE,
-            'retcode' => $retcode,
-            'error' => curl_error($ch),
-        );
-        return $return;
-    }
+    return $json_return; 
+  }
+  else {
+    $return = array(
+        'status' => FALSE,
+        'retcode' => $retcode,
+        'error' => curl_error($ch),
+    );
+  	curl_close($ch);
+    $json_return = drupal_json_encode($return);
+  	return $json_return;
+  }
 }
 
 function isup_check_form($form, &$form_state) {
@@ -82,7 +98,8 @@ function isup_check_form($form, &$form_state) {
 	);
 	$form['submit'] = array(
 		'#type' => 'submit',
-		'#value' => t('Submit'),
+		'#value' => t('Is Up?'),
+		'#attributes' => array('class' => array('btn-primary')),
 	);
 
 	return $form;
@@ -101,10 +118,10 @@ function isup_check_form_submit($form, &$form_state) {
 	$request = _isup_curl_request($url);
 
 	if ($request['status']) {
-		drupal_set_message('Your site is up.');
+		drupal_set_message($url . ': your site is up.');
 	}
 	else {
-		drupal_set_message('Your site is down.');
+		drupal_set_message($url . ': your site is down.');
 	}
 }
 
